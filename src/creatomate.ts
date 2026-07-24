@@ -48,12 +48,11 @@ export async function renderVideo(modifications: Record<string, string>): Promis
     }),
   });
 
-  const renders = (await created.json()) as CreatomateRender[];
-  const render = renders[0];
-  if (!render) {
-    throw new Error("Creatomate n'a renvoyé aucun rendu à la création.");
-  }
-
+  const body = (await created.json()) as CreatomateRender[] | CreatomateRender;
+const render = Array.isArray(body) ? body[0] : body;
+if (!render) {
+  throw new Error("Creatomate n'a renvoyé aucun rendu à la création.");
+}
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
     const statusRes = await creatomateFetch(`/renders/${render.id}`);
     const current = (await statusRes.json()) as CreatomateRender;
