@@ -14,8 +14,8 @@ function required(name: string): string {
 export const config = {
   anthropicApiKey: required("ANTHROPIC_API_KEY"),
 
-  creatomateApiKey: required("CREATOMATE_API_KEY"),
-  creatomateTemplateId: required("CREATOMATE_TEMPLATE_ID"),
+    elevenlabsApiKey: required("ELEVENLABS_API_KEY"),
+  elevenlabsVoiceId: process.env.ELEVENLABS_VOICE_ID || "pNInz6obpgDQGcFmaJgB",
 
   youtubeClientId: required("YOUTUBE_CLIENT_ID"),
   youtubeClientSecret: required("YOUTUBE_CLIENT_SECRET"),
