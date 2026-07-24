@@ -18,7 +18,7 @@ const scriptSchema = z.object({
 export async function generateScript(topic: Topic): Promise<ScriptResult> {
   const message = await anthropic.messages.create({
     model: "claude-sonnet-5",
-    max_tokens: 1536,
+    max_tokens: 3000,
     messages: [
       {
         role: "user",
