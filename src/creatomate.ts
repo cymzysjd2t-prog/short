@@ -3,7 +3,7 @@ import { Readable } from "node:stream";
 import { pipeline as streamPipeline } from "node:stream/promises";
 import { config } from "./config.js";
 
-const API_BASE = "https://api.creatomate.com/v1";
+const API_BASE = "https://api.creatomate.com/v2";
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLL_ATTEMPTS = 60; // 5 minutes max
 
