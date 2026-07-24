@@ -45,5 +45,7 @@ export async function generateScript(topic: Topic): Promise<ScriptResult> {
     throw new Error("Claude n'a renvoyé aucun contenu texte pour la génération du script.");
   }
 
-  return scriptSchema.parse(extractJson<ScriptResult>(textBlock.text));
+ const raw = extractJson<ScriptResult | ScriptResult[]>(textBlock.text);
+const candidate = Array.isArray(raw) ? raw[0] : raw;
+return scriptSchema.parse(candidate);
 }
