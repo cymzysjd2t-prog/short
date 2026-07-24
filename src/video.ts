@@ -6,12 +6,24 @@ import { join } from "node:path";
 import { config } from "./config.js";
 
 const ELEVENLABS_API = "https://api.elevenlabs.io/v1";
+const PEXELS_API = "https://api.pexels.com/videos";
 const FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf";
 
 interface CaptionChunk {
   text: string;
   start: number;
   end: number;
+}
+
+interface PexelsVideoFile {
+  link: string;
+  width: number;
+  height: number;
+  quality: string;
+}
+
+interface PexelsSearchResponse {
+  videos: { video_files: PexelsVideoFile[] }[];
 }
 
 function run(cmd: string, args: string[]): Promise<void> {
@@ -87,6 +99,48 @@ async function getAudioDuration(filePath: string): Promise<number> {
   return seconds;
 }
 
+/**
+ * Cherche une vidéo de stock verticale/proche sur Pexels et la télécharge. Retourne false
+ * (au lieu de lever une erreur) si rien n'est trouvé ou si l'appel échoue, pour ne jamais
+ * faire échouer tout le pipeline à cause d'un simple manque de résultat visuel.
+ */
+async function fetchBackgroundVideo(query: string, destPath: string): Promise<boolean> {
+  try {
+    const searchRes = await fetch(
+      `${PEXELS_API}/search?query=${encodeURIComponent(query)}&orientation=portrait&per_page=5`,
+      { headers: { Authorization: config.pexelsApiKey } },
+    );
+    if (!searchRes.ok) {
+      console.warn(`Pexels API -> ${searchRes.status}, on utilisera un fond uni.`);
+      return false;
+    }
+
+    const data = (await searchRes.json()) as PexelsSearchResponse;
+    const files = data.videos.flatMap((v) => v.video_files);
+    const best =
+      files.find((f) => f.quality === "hd" && f.width < f.height) ??
+      files.find((f) => f.width < f.height) ??
+      files[0];
+
+    if (!best) {
+      console.warn(`Aucune vidéo Pexels trouvée pour "${query}", on utilisera un fond uni.`);
+      return false;
+    }
+
+    const videoRes = await fetch(best.link);
+    if (!videoRes.ok) {
+      console.warn(`Téléchargement Pexels échoué -> ${videoRes.status}, on utilisera un fond uni.`);
+      return false;
+    }
+    const buffer = Buffer.from(await videoRes.arrayBuffer());
+    await writeFile(destPath, buffer);
+    return true;
+  } catch (err) {
+    console.warn(`Pexels indisponible (${err instanceof Error ? err.message : err}), fond uni utilisé.`);
+    return false;
+  }
+}
+
 /** Découpe le script en phrases, chacune affichée pendant une durée proportionnelle à sa longueur. */
 function splitIntoChunks(script: string, totalDuration: number): CaptionChunk[] {
   const sentences = script
@@ -125,12 +179,15 @@ function wrapText(text: string, maxLineLength: number): string {
 }
 
 /**
- * Génère la voix off (ElevenLabs) puis assemble la vidéo verticale (fond uni + titre +
- * sous-titres) avec ffmpeg. Aucun service de montage tiers payant requis.
+ * Génère la voix off (ElevenLabs), récupère un fond vidéo de stock (Pexels) lié au sujet,
+ * puis assemble la vidéo verticale (fond + titre + sous-titres) avec ffmpeg. Si aucune
+ * vidéo de stock n'est trouvée, un fond uni sert de repli plutôt que de faire échouer le run.
  */
-export async function renderVideo(params: { title: string; voiceoverScript: string }): Promise<{
-  videoPath: string;
-}> {
+export async function renderVideo(params: {
+  title: string;
+  voiceoverScript: string;
+  visualKeyword: string;
+}): Promise<{ videoPath: string }> {
   const workDir = join(tmpdir(), `render-${randomUUID()}`);
   await mkdir(workDir, { recursive: true });
 
@@ -144,6 +201,7 @@ export async function renderVideo(params: { title: string; voiceoverScript: stri
   await writeFile(titleFile, wrapText(params.title, 24), "utf-8");
 
   const drawtextFilters: string[] = [
+    `drawbox=x=0:y=0:w=1080:h=1920:color=black@0.35:t=fill`,
     `drawtext=fontfile=${FONT_PATH}:textfile=${titleFile}:fontcolor=white:fontsize=64:` +
       `x=(w-text_w)/2:y=h*0.08:box=1:boxcolor=black@0.5:boxborderw=20`,
   ];
@@ -160,26 +218,57 @@ export async function renderVideo(params: { title: string; voiceoverScript: stri
     );
   }
 
+  const backgroundPath = join(workDir, "background.mp4");
+  const hasBackground = await fetchBackgroundVideo(params.visualKeyword, backgroundPath);
+
   const outputPath = join(workDir, "output.mp4");
-  await run("ffmpeg", [
-    "-y",
-    "-f",
-    "lavfi",
-    "-i",
-    `color=c=black:s=1080x1920:d=${duration.toFixed(2)}`,
-    "-i",
-    audioPath,
-    "-vf",
-    drawtextFilters.join(","),
-    "-c:v",
-    "libx264",
-    "-pix_fmt",
-    "yuv420p",
-    "-c:a",
-    "aac",
-    "-shortest",
-    outputPath,
-  ]);
+  const drawtextChain = drawtextFilters.join(",");
+
+  if (hasBackground) {
+    await run("ffmpeg", [
+      "-y",
+      "-stream_loop",
+      "-1",
+      "-i",
+      backgroundPath,
+      "-i",
+      audioPath,
+      "-filter_complex",
+      `[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,${drawtextChain}[out]`,
+      "-map",
+      "[out]",
+      "-map",
+      "1:a",
+      "-c:v",
+      "libx264",
+      "-pix_fmt",
+      "yuv420p",
+      "-c:a",
+      "aac",
+      "-shortest",
+      outputPath,
+    ]);
+  } else {
+    await run("ffmpeg", [
+      "-y",
+      "-f",
+      "lavfi",
+      "-i",
+      `color=c=#222222:s=1080x1920:d=${duration.toFixed(2)}`,
+      "-i",
+      audioPath,
+      "-vf",
+      drawtextChain,
+      "-c:v",
+      "libx264",
+      "-pix_fmt",
+      "yuv420p",
+      "-c:a",
+      "aac",
+      "-shortest",
+      outputPath,
+    ]);
+  }
 
   return { videoPath: outputPath };
 }
