@@ -8,6 +8,7 @@ const scriptSchema = z.object({
   description: z.string().min(1),
   tags: z.array(z.string().min(1)).min(1),
   voiceoverScript: z.string().min(1),
+  visualKeyword: z.string().min(1),
 });
 
 /**
@@ -32,10 +33,13 @@ export async function generateScript(topic: Topic): Promise<ScriptResult> {
           `phrase de conclusion nette. Écrit pour être lu à voix haute par une synthèse vocale.\n` +
           `- "title" : titre YouTube percutant, 100 caractères max, sans clickbait mensonger.\n` +
           `- "description" : 2-3 phrases + 3-5 hashtags pertinents dont #Shorts.\n` +
-          `- "tags" : 8 à 15 mots-clés YouTube pertinents (pas de hashtags, juste des mots/expressions).\n\n` +
+          `- "tags" : 8 à 15 mots-clés YouTube pertinents (pas de hashtags, juste des mots/expressions).\n` +
+          `- "visualKeyword" : 2 à 4 mots EN ANGLAIS décrivant une image/scène concrète et filmable ` +
+          `pour illustrer ce sujet en fond vidéo (ex: "ocean storm night", "old library books", ` +
+          `"city traffic aerial") — sert à chercher une vidéo de stock, pas de mots abstraits.\n\n` +
           `Réponds UNIQUEMENT avec un objet JSON de la forme ` +
-          `{"title": "...", "description": "...", "tags": ["...", "..."], "voiceoverScript": "..."}. ` +
-          `Aucun texte avant ou après le JSON.`,
+          `{"title": "...", "description": "...", "tags": ["...", "..."], "voiceoverScript": "...", ` +
+          `"visualKeyword": "..."}. Aucun texte avant ou après le JSON.`,
       },
     ],
   });
