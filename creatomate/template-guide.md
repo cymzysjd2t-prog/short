@@ -40,7 +40,7 @@ Dans l'éditeur, le template a un ID visible dans l'URL ou via Project → Templ
 Avant de brancher l'automatisation complète, teste un rendu à la main :
 
 ```bash
-curl -X POST https://api.creatomate.com/v1/renders \
+curl -X POST https://api.creatomate.com/v2/renders \
   -H "Authorization: Bearer $CREATOMATE_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
