@@ -2,8 +2,9 @@ name: Publish Daily YouTube Short
 
 on:
   schedule:
+    # 15:00 UTC chaque jour — ajuste selon l'heure de publication souhaitée.
     - cron: "0 15 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch: {} # permet de déclencher un run manuellement depuis l'onglet Actions
 
 permissions:
   contents: write
@@ -31,6 +32,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
