@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "id": "98a552a8-40ec-45fa-b27d-897185a220ac",
+    "title": "Le message codé retrouvé dans la poche d'un randonneur jamais identifié",
+    "createdAt": "2026-08-01T23:03:40.614Z"
+  },
+  {
+    "id": "1d206575-0d02-428e-a15e-8e2777bd9451",
+    "title": "L'horloge qui s'arrêtait toujours à l'heure exacte des accidents du village",
+    "createdAt": "2026-08-01T23:03:40.614Z"
+  },
+  {
+    "id": "475fac1d-2eea-43a9-a70f-2399a7d50a75",
+    "title": "Le passager qui a embarqué dans un train qui n'existait plus depuis 40 ans",
+    "createdAt": "2026-08-01T23:03:40.614Z"
+  },
+  {
+    "id": "86700219-a9a0-4687-ac50-27e3b34dadf5",
+    "title": "La coïncidence troublante entre deux frères séparés à la naissance",
+    "createdAt": "2026-08-01T23:03:40.614Z"
+  },
+  {
+    "id": "ef120efb-9a2d-47b1-8ad5-85ef45a89233",
+    "title": "L'appel téléphonique reçu trois jours après la mort de l'expéditeur",
+    "createdAt": "2026-08-01T23:03:40.614Z"
+  },
+  {
+    "id": "ae278157-a9ae-436c-a700-d8a11aef0da4",
+    "title": "Le photographe qui a capturé la même ombre sur chaque photo pendant 10 ans",
+    "createdAt": "2026-08-01T23:03:40.614Z"
+  },
+  {
+    "id": "4ee1fc3f-ae55-4464-8207-0712809e2e96",
+    "title": "La lettre retrouvée scellée depuis 1962 qui prédisait un événement exact",
+    "createdAt": "2026-08-01T23:03:40.614Z"
+  },
+  {
+    "id": "53c01997-7a8e-4467-91d3-96f19e98e795",
+    "title": "Le gardien de phare qui a vu son remplaçant avant même son arrivée",
+    "createdAt": "2026-08-01T23:03:40.614Z"
+  },
+  {
+    "id": "07599a62-210f-4b11-a73f-b34f7c69cc51",
+    "title": "L'enfant qui décrivait un accident avant qu'il ne se produise réellement",
+    "createdAt": "2026-08-01T23:03:40.614Z"
+  }
+]
