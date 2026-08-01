@@ -33,7 +33,7 @@ export async function runPipeline(): Promise<void> {
   const { videoPath } = await renderVideo({
     title: script.title,
     voiceoverScript: script.voiceoverScript,
-    visualKeyword: script.visualKeyword,
+    visualKeywords: script.visualKeywords,
   });
 
   try {
