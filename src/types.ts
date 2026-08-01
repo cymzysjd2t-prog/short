@@ -9,7 +9,7 @@ export interface ScriptResult {
   description: string;
   tags: string[];
   voiceoverScript: string;
-  visualKeyword: string;
+  visualKeywords: string[];
 }
 
 export interface HistoryEntry {
