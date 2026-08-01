@@ -6,6 +6,7 @@
   "description": "Pipeline 100% automatique : idée -> script (Claude) -> montage vidéo (Creatomate) -> publication YouTube Shorts.",
   "scripts": {
     "publish": "tsx src/index.ts",
+    "publish:kids": "tsx src/kids-index.ts",
     "get-youtube-token": "tsx scripts/get-youtube-refresh-token.ts",
     "typecheck": "tsc --noEmit"
   },
