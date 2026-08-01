@@ -239,7 +239,7 @@ export async function renderKidsVideo(params: { items: KidsItem[] }): Promise<{ 
     await writeFile(lineFile, wrapText(item.line, 22), "utf-8");
 
     drawtextParts.push(
-      `drawbox=x=0:y=h*0.20:w=1080:h=h*0.22:color=black@0.35:t=fill:enable='between(t,${start.toFixed(2)},${end.toFixed(2)})'`,
+      `drawbox=x=0:y=ih*0.20:w=1080:h=ih*0.22:color=black@0.35:t=fill:enable='between(t,${start.toFixed(2)},${end.toFixed(2)})'`,
     );
     drawtextParts.push(
       `drawtext=fontfile=${FONT_PATH}:textfile=${labelFile}:fontcolor=white:fontsize=160:` +
