@@ -1,7 +1,18 @@
+import "dotenv/config";
 import Anthropic from "@anthropic-ai/sdk";
-import { config } from "./config.js";
 
-export const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `Variable d'environnement manquante : ${name}. Renseigne le secret correspondant dans les ` +
+        `paramètres GitHub Actions.`,
+    );
+  }
+  return value;
+}
+
+export const anthropic = new Anthropic({ apiKey: required("ANTHROPIC_API_KEY") });
 
 /** Extrait le premier bloc JSON valide (objet ou tableau) d'une réponse texte de Claude. */
 export function extractJson<T>(text: string): T {
