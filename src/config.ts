@@ -16,6 +16,7 @@ export const config = {
 
   elevenlabsApiKey: required("ELEVENLABS_API_KEY"),
   elevenlabsVoiceId: process.env.ELEVENLABS_VOICE_ID || "pNInz6obpgDQGcFmaJgB",
+  edgeTtsVoice: process.env.EDGE_TTS_VOICE || "fr-FR-HenriNeural",
 
   pexelsApiKey: required("PEXELS_API_KEY"),
 
