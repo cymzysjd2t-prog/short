@@ -2,7 +2,7 @@ name: Publish Daily YouTube Short (Kids)
 
 on:
   schedule:
-    - cron: "0 10 * * *"
+   - cron: "0 9,13,17 * * *"
   workflow_dispatch: {}
 
 permissions:
