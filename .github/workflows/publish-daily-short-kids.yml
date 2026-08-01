@@ -52,4 +52,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data/topics-kids.json data/history-kids.json
           git diff --cached --quiet || git commit -m "chore: mise à jour automatique des données enfants (run ${{ github.run_id }})"
+          git pull --rebase origin main
           git push
