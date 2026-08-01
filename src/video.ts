@@ -127,19 +127,15 @@ async function getAudioDuration(filePath: string): Promise<number> {
   return seconds;
 }
 
-/**
- * Cherche une vidéo de stock verticale/proche sur Pexels et la télécharge. Retourne false
- * (au lieu de lever une erreur) si rien n'est trouvé ou si l'appel échoue, pour ne jamais
- * faire échouer tout le pipeline à cause d'un simple manque de résultat visuel.
- */
-async function fetchBackgroundVideo(query: string, destPath: string): Promise<boolean> {
+/** Cherche une vidéo de stock verticale/proche sur Pexels. Retourne false si rien n'est trouvé. */
+async function tryFetchPexelsVideo(query: string, destPath: string): Promise<boolean> {
   try {
     const searchRes = await fetch(
       `${PEXELS_API}/search?query=${encodeURIComponent(query)}&orientation=portrait&per_page=5`,
       { headers: { Authorization: config.pexelsApiKey } },
     );
     if (!searchRes.ok) {
-      console.warn(`Pexels API -> ${searchRes.status}, on utilisera un fond uni.`);
+      console.warn(`Pexels API -> ${searchRes.status} pour "${query}".`);
       return false;
     }
 
@@ -151,21 +147,43 @@ async function fetchBackgroundVideo(query: string, destPath: string): Promise<bo
       files[0];
 
     if (!best) {
-      console.warn(`Aucune vidéo Pexels trouvée pour "${query}", on utilisera un fond uni.`);
+      console.warn(`Aucune vidéo Pexels trouvée pour "${query}".`);
       return false;
     }
 
     const videoRes = await fetch(best.link);
     if (!videoRes.ok) {
-      console.warn(`Téléchargement Pexels échoué -> ${videoRes.status}, on utilisera un fond uni.`);
+      console.warn(`Téléchargement Pexels échoué -> ${videoRes.status} pour "${query}".`);
       return false;
     }
     const buffer = Buffer.from(await videoRes.arrayBuffer());
     await writeFile(destPath, buffer);
     return true;
   } catch (err) {
-    console.warn(`Pexels indisponible (${err instanceof Error ? err.message : err}), fond uni utilisé.`);
+    console.warn(`Pexels indisponible pour "${query}" (${err instanceof Error ? err.message : err}).`);
     return false;
+  }
+}
+
+/**
+ * Garantit qu'un fichier vidéo existe à destPath pour ce plan : vidéo Pexels liée au
+ * mot-clé si possible, sinon un fond de couleur unie de la même durée en repli.
+ */
+async function ensureBackgroundSegment(query: string, destPath: string, duration: number): Promise<void> {
+  const found = await tryFetchPexelsVideo(query, destPath);
+  if (!found) {
+    await run("ffmpeg", [
+      "-y",
+      "-f",
+      "lavfi",
+      "-i",
+      `color=c=#222222:s=1080x1920:d=${duration.toFixed(2)}`,
+      "-c:v",
+      "libx264",
+      "-pix_fmt",
+      "yuv420p",
+      destPath,
+    ]);
   }
 }
 
@@ -207,14 +225,15 @@ function wrapText(text: string, maxLineLength: number): string {
 }
 
 /**
- * Génère la voix off (ElevenLabs), récupère un fond vidéo de stock (Pexels) lié au sujet,
- * puis assemble la vidéo verticale (fond + titre + sous-titres) avec ffmpeg. Si aucune
- * vidéo de stock n'est trouvée, un fond uni sert de repli plutôt que de faire échouer le run.
+ * Génère la voix off (ElevenLabs/Edge TTS), récupère plusieurs plans vidéo de stock
+ * (Pexels) correspondant aux différents moments du script, les enchaîne, puis superpose
+ * titre + sous-titres avec ffmpeg. Chaque plan qui échoue à trouver une vidéo tombe sur
+ * un fond uni plutôt que de faire échouer tout le run.
  */
 export async function renderVideo(params: {
   title: string;
   voiceoverScript: string;
-  visualKeyword: string;
+  visualKeywords: string[];
 }): Promise<{ videoPath: string }> {
   const workDir = join(tmpdir(), `render-${randomUUID()}`);
   await mkdir(workDir, { recursive: true });
@@ -246,57 +265,53 @@ export async function renderVideo(params: {
     );
   }
 
-  const backgroundPath = join(workDir, "background.mp4");
-  const hasBackground = await fetchBackgroundVideo(params.visualKeyword, backgroundPath);
+  const keywords = params.visualKeywords.length > 0 ? params.visualKeywords : [params.title];
+  const segmentDuration = duration / keywords.length;
 
-  const outputPath = join(workDir, "output.mp4");
-  const drawtextChain = drawtextFilters.join(",");
-
-  if (hasBackground) {
-    await run("ffmpeg", [
-      "-y",
-      "-stream_loop",
-      "-1",
-      "-i",
-      backgroundPath,
-      "-i",
-      audioPath,
-      "-filter_complex",
-      `[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,${drawtextChain}[out]`,
-      "-map",
-      "[out]",
-      "-map",
-      "1:a",
-      "-c:v",
-      "libx264",
-      "-pix_fmt",
-      "yuv420p",
-      "-c:a",
-      "aac",
-      "-shortest",
-      outputPath,
-    ]);
-  } else {
-    await run("ffmpeg", [
-      "-y",
-      "-f",
-      "lavfi",
-      "-i",
-      `color=c=#222222:s=1080x1920:d=${duration.toFixed(2)}`,
-      "-i",
-      audioPath,
-      "-vf",
-      drawtextChain,
-      "-c:v",
-      "libx264",
-      "-pix_fmt",
-      "yuv420p",
-      "-c:a",
-      "aac",
-      "-shortest",
-      outputPath,
-    ]);
+  const segmentPaths: string[] = [];
+  for (let i = 0; i < keywords.length; i++) {
+    const keyword = keywords[i];
+    if (!keyword) continue;
+    const segmentPath = join(workDir, `bg-${i}.mp4`);
+    await ensureBackgroundSegment(keyword, segmentPath, segmentDuration);
+    segmentPaths.push(segmentPath);
   }
+
+  const inputArgs: string[] = [];
+  const scaleLabels: string[] = [];
+  segmentPaths.forEach((path, i) => {
+    inputArgs.push("-stream_loop", "-1", "-t", segmentDuration.toFixed(2), "-i", path);
+    scaleLabels.push(
+      `[${i}:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30[v${i}]`,
+    );
+  });
+  const concatInputs = segmentPaths.map((_, i) => `[v${i}]`).join("");
+  const concatFilter = `${concatInputs}concat=n=${segmentPaths.length}:v=1:a=0[bg]`;
+  const filterComplex = [...scaleLabels, concatFilter, `[bg]${drawtextFilters.join(",")}[out]`].join(";");
+
+  const audioInputIndex = segmentPaths.length;
+  const outputPath = join(workDir, "output.mp4");
+
+  await run("ffmpeg", [
+    "-y",
+    ...inputArgs,
+    "-i",
+    audioPath,
+    "-filter_complex",
+    filterComplex,
+    "-map",
+    "[out]",
+    "-map",
+    `${audioInputIndex}:a`,
+    "-c:v",
+    "libx264",
+    "-pix_fmt",
+    "yuv420p",
+    "-c:a",
+    "aac",
+    "-shortest",
+    outputPath,
+  ]);
 
   return { videoPath: outputPath };
 }
