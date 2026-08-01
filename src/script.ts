@@ -8,13 +8,14 @@ const scriptSchema = z.object({
   description: z.string().min(1),
   tags: z.array(z.string().min(1)).min(1),
   voiceoverScript: z.string().min(1),
-  visualKeyword: z.string().min(1).optional(),
+  visualKeywords: z.array(z.string().min(1)).min(1).optional(),
 });
 
 /**
- * Génère le script complet d'un Short (titre, description, tags, texte de voix off)
- * à partir d'un sujet. Le texte de voix off est ensuite envoyé tel quel à Creatomate,
- * qui se charge de la synthèse vocale et des sous-titres.
+ * Génère le script complet d'un Short (titre, description, tags, texte de voix off,
+ * plans vidéo) à partir d'un sujet. Le texte de voix off est envoyé à la synthèse
+ * vocale ; les mots-clés visuels servent à choisir plusieurs vidéos de stock qui
+ * s'enchaînent en fond, dans l'ordre du récit.
  */
 export async function generateScript(topic: Topic): Promise<ScriptResult> {
   const message = await anthropic.messages.create({
@@ -34,12 +35,14 @@ export async function generateScript(topic: Topic): Promise<ScriptResult> {
           `- "title" : titre YouTube percutant, 100 caractères max, sans clickbait mensonger.\n` +
           `- "description" : 2-3 phrases + 3-5 hashtags pertinents dont #Shorts.\n` +
           `- "tags" : 8 à 15 mots-clés YouTube pertinents (pas de hashtags, juste des mots/expressions).\n` +
-          `- "visualKeyword" : 2 à 4 mots EN ANGLAIS décrivant une image/scène concrète et filmable ` +
-          `pour illustrer ce sujet en fond vidéo (ex: "ocean storm night", "old library books", ` +
-          `"city traffic aerial") — sert à chercher une vidéo de stock, pas de mots abstraits.\n\n` +
+          `- "visualKeywords" : un TABLEAU de 3 à 5 mots-clés EN ANGLAIS, chacun décrivant une scène ` +
+          `concrète et filmable, DANS L'ORDRE où l'histoire se déroule (ex: pour une histoire de ` +
+          `naufrage : ["stormy ocean night", "life raft floating", "fishing hands survival", ` +
+          `"rescue boat horizon"]) — chaque mot-clé sert à chercher une vidéo de stock différente pour ` +
+          `ce moment précis du récit. Pas de mots abstraits, uniquement des scènes filmables.\n\n` +
           `Réponds UNIQUEMENT avec un objet JSON de la forme ` +
           `{"title": "...", "description": "...", "tags": ["...", "..."], "voiceoverScript": "...", ` +
-          `"visualKeyword": "..."}. Aucun texte avant ou après le JSON.`,
+          `"visualKeywords": ["...", "...", "..."]}. Aucun texte avant ou après le JSON.`,
       },
     ],
   });
@@ -50,5 +53,5 @@ export async function generateScript(topic: Topic): Promise<ScriptResult> {
   }
 
   const parsed = scriptSchema.parse(extractJsonObject<Record<string, unknown>>(textBlock.text));
-  return { ...parsed, visualKeyword: parsed.visualKeyword ?? parsed.title };
+  return { ...parsed, visualKeywords: parsed.visualKeywords ?? [parsed.title] };
 }
