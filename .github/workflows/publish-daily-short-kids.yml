@@ -33,6 +33,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           KIDS_ELEVENLABS_VOICE_ID: ${{ secrets.KIDS_ELEVENLABS_VOICE_ID }}
           KIDS_EDGE_TTS_VOICE: ${{ secrets.KIDS_EDGE_TTS_VOICE }}
           KIDS_YOUTUBE_CLIENT_ID: ${{ secrets.KIDS_YOUTUBE_CLIENT_ID }}
