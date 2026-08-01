@@ -60,7 +60,7 @@ function runCapture(cmd: string, args: string[]): Promise<string> {
   });
 }
 
-async function synthesizeVoice(text: string, destPath: string): Promise<void> {
+async function synthesizeVoiceElevenLabs(text: string, destPath: string): Promise<void> {
   const res = await fetch(`${ELEVENLABS_API}/text-to-speech/${config.elevenlabsVoiceId}`, {
     method: "POST",
     headers: {
@@ -80,6 +80,34 @@ async function synthesizeVoice(text: string, destPath: string): Promise<void> {
   }
   const buffer = Buffer.from(await res.arrayBuffer());
   await writeFile(destPath, buffer);
+}
+
+/** Repli gratuit (Microsoft Edge TTS, via le paquet Python edge-tts) si ElevenLabs échoue. */
+async function synthesizeVoiceEdgeTts(text: string, destPath: string, workDir: string): Promise<void> {
+  const textFile = join(workDir, "voiceover-text.txt");
+  await writeFile(textFile, text, "utf-8");
+  await run("python3", [
+    "-m",
+    "edge_tts",
+    "--file",
+    textFile,
+    "--voice",
+    config.edgeTtsVoice,
+    "--write-media",
+    destPath,
+  ]);
+}
+
+/** Essaie ElevenLabs en premier, puis Edge TTS (gratuit) si ça échoue (quota dépassé, panne, etc.). */
+async function synthesizeVoice(text: string, destPath: string, workDir: string): Promise<void> {
+  try {
+    await synthesizeVoiceElevenLabs(text, destPath);
+  } catch (err) {
+    console.warn(
+      `ElevenLabs indisponible (${err instanceof Error ? err.message : err}) — repli sur Edge TTS (gratuit).`,
+    );
+    await synthesizeVoiceEdgeTts(text, destPath, workDir);
+  }
 }
 
 async function getAudioDuration(filePath: string): Promise<number> {
@@ -192,7 +220,7 @@ export async function renderVideo(params: {
   await mkdir(workDir, { recursive: true });
 
   const audioPath = join(workDir, "voiceover.mp3");
-  await synthesizeVoice(params.voiceoverScript, audioPath);
+  await synthesizeVoice(params.voiceoverScript, audioPath, workDir);
 
   const duration = await getAudioDuration(audioPath);
   const chunks = splitIntoChunks(params.voiceoverScript, duration);
