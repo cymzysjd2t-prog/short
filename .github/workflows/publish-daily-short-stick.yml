@@ -20,13 +20,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install system deps (ffmpeg, fonts, canvas build libs)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg fonts-dejavu-core build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev pkg-config
-
       - name: Install dependencies
         run: npm install
+
+      - name: Install ffmpeg & fonts
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
 
       - name: Install edge-tts (repli gratuit si ElevenLabs est à court de crédits)
         run: pip install edge-tts
@@ -35,6 +33,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           STICK_ELEVENLABS_VOICE_ID: ${{ secrets.STICK_ELEVENLABS_VOICE_ID }}
           STICK_EDGE_TTS_VOICE: ${{ secrets.STICK_EDGE_TTS_VOICE }}
           STICK_YOUTUBE_CLIENT_ID: ${{ secrets.STICK_YOUTUBE_CLIENT_ID }}
@@ -52,6 +51,8 @@ jobs:
           git config user.name "youtube-shorts-autopilot-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/topics-stick.json data/history-stick.json
-          git diff --cached --quiet || git commit -m "chore: mise à jour automatique des données stickman (run ${{ github.run_id }})"
+          git diff --cached --quiet || git commit -m "chore: mise à jour automatique des données Top (run ${{ github.run_id }})"
+          git checkout -- .
+          git clean -fd
           git pull --rebase origin main
           git push
