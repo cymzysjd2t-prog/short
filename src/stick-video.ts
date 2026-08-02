@@ -4,7 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { stickConfig } from "./stick-config.js";
-import type { StickFactItem } from "./stick-script.js";
+import type { StickScriptResult } from "./stick-script.js";
 
 const ELEVENLABS_API = "https://api.elevenlabs.io/v1";
 const PEXELS_API = "https://api.pexels.com/videos";
@@ -196,30 +196,51 @@ function wrapText(text: string, maxLineLength: number): string {
   return lines.join("\n");
 }
 
+interface RenderItem {
+  /** Ce qui est dit à voix haute pour cet élément (inclut l'annonce "Top N" pour les faits). */
+  spokenText: string;
+  /** Grand texte affiché à l'écran (ex: "TOP 5", "N°5"). Absent pour l'intro. */
+  label?: string;
+  /** Texte du fait affiché en bas de l'écran. Absent pour l'intro. */
+  bodyText?: string;
+  visualKeyword: string;
+}
+
 /**
- * Génère la voix off (une seule piste pour tous les éléments), récupère une vraie vidéo de
- * stock (Pexels) pour chaque élément du classement, les enchaîne, puis superpose le rang en
- * grand et le texte de chaque fait au bon moment.
+ * Génère la voix off (une seule piste pour l'accroche + tous les éléments, avec l'annonce
+ * "Top N" dite à voix haute à chaque nouvel élément), récupère une vraie vidéo de stock
+ * (Pexels) pour chaque segment, les enchaîne, puis superpose le rang en grand et le texte de
+ * chaque fait au bon moment.
  */
-export async function renderStickVideo(params: { facts: StickFactItem[] }): Promise<{ videoPath: string }> {
+export async function renderStickVideo(script: StickScriptResult): Promise<{ videoPath: string }> {
   const workDir = join(tmpdir(), `stick-render-${randomUUID()}`);
   await mkdir(workDir, { recursive: true });
 
-  const fullNarration = params.facts.map((fact) => fact.text).join(" ");
+  const items: RenderItem[] = [
+    { spokenText: script.intro, label: `TOP ${script.facts.length}`, visualKeyword: script.introVisualKeyword },
+    ...script.facts.map((fact) => ({
+      spokenText: `Top ${fact.rank}. ${fact.text}`,
+      label: fact.label,
+      bodyText: fact.text,
+      visualKeyword: fact.visualKeyword,
+    })),
+  ];
+
+  const fullNarration = items.map((item) => item.spokenText).join(" ");
   const audioPath = join(workDir, "voiceover.mp3");
   await synthesizeVoice(fullNarration, audioPath, workDir);
 
   const duration = await getAudioDuration(audioPath);
-  const totalChars = params.facts.reduce((sum, fact) => sum + fact.text.length, 0) || 1;
+  const totalChars = items.reduce((sum, item) => sum + item.spokenText.length, 0) || 1;
 
   const segmentPaths: string[] = [];
   const segmentDurations: number[] = [];
-  for (let i = 0; i < params.facts.length; i++) {
-    const fact = params.facts[i];
-    if (!fact) continue;
-    const segmentDuration = duration * (fact.text.length / totalChars);
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (!item) continue;
+    const segmentDuration = duration * (item.spokenText.length / totalChars);
     const segmentPath = join(workDir, `bg-${i}.mp4`);
-    await ensureBackgroundSegment(fact.visualKeyword, segmentPath, segmentDuration);
+    await ensureBackgroundSegment(item.visualKeyword, segmentPath, segmentDuration);
     segmentPaths.push(segmentPath);
     segmentDurations.push(segmentDuration);
   }
@@ -236,30 +257,37 @@ export async function renderStickVideo(params: { facts: StickFactItem[] }): Prom
     );
   });
 
-  for (let i = 0; i < params.facts.length; i++) {
-    const fact = params.facts[i];
-    if (!fact) continue;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (!item) continue;
     const segmentDuration = segmentDurations[i] ?? 0;
     const start = segmentDurations.slice(0, i).reduce((a, b) => a + b, 0);
     const end = start + segmentDuration;
+    const enable = `enable='between(t,${start.toFixed(2)},${end.toFixed(2)})'`;
 
-    const labelFile = join(workDir, `label-${i}.txt`);
-    await writeFile(labelFile, fact.label, "utf-8");
-    const textFile = join(workDir, `text-${i}.txt`);
-    await writeFile(textFile, wrapText(fact.text, 26), "utf-8");
+    if (item.bodyText) {
+      drawtextParts.push(`drawbox=x=0:y=ih*0.18:w=1080:h=ih*0.16:color=black@0.4:t=fill:${enable}`);
+    }
 
-    drawtextParts.push(
-      `drawbox=x=0:y=ih*0.18:w=1080:h=ih*0.16:color=black@0.4:t=fill:enable='between(t,${start.toFixed(2)},${end.toFixed(2)})'`,
-    );
-    drawtextParts.push(
-      `drawtext=fontfile=${FONT_PATH}:textfile=${labelFile}:fontcolor=white:fontsize=110:` +
-        `x=(w-text_w)/2:y=h*0.20:enable='between(t,${start.toFixed(2)},${end.toFixed(2)})'`,
-    );
-    drawtextParts.push(
-      `drawtext=fontfile=${FONT_PATH}:textfile=${textFile}:fontcolor=white:fontsize=52:` +
-        `x=(w-text_w)/2:y=h*0.72:box=1:boxcolor=black@0.45:boxborderw=18:` +
-        `enable='between(t,${start.toFixed(2)},${end.toFixed(2)})'`,
-    );
+    if (item.label) {
+      const labelFile = join(workDir, `label-${i}.txt`);
+      await writeFile(labelFile, item.label, "utf-8");
+      const labelY = item.bodyText ? "h*0.20" : "(h-text_h)/2";
+      drawtextParts.push(
+        `drawtext=fontfile=${FONT_PATH}:textfile=${labelFile}:fontcolor=white:fontsize=110:` +
+          `x=(w-text_w)/2:y=${labelY}:${enable}`,
+      );
+    }
+
+    if (item.bodyText) {
+      const textFile = join(workDir, `text-${i}.txt`);
+      await writeFile(textFile, wrapText(item.bodyText, 26), "utf-8");
+
+      drawtextParts.push(
+        `drawtext=fontfile=${FONT_PATH}:textfile=${textFile}:fontcolor=white:fontsize=52:` +
+          `x=(w-text_w)/2:y=h*0.72:box=1:boxcolor=black@0.45:boxborderw=18:${enable}`,
+      );
+    }
   }
 
   const concatInputs = segmentPaths.map((_, i) => `[v${i}]`).join("");
