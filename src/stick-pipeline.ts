@@ -36,7 +36,7 @@ export async function runStickPipeline(): Promise<void> {
   console.log(`   -> Titre : "${script.title}" (${script.facts.length} faits)`);
 
   console.log("3/4 — Génération de la voix et montage vidéo...");
-  const { videoPath } = await renderStickVideo({ facts: script.facts });
+  const { videoPath } = await renderStickVideo(script);
 
   try {
     console.log("4/4 — Publication sur YouTube (chaîne Top)...");
