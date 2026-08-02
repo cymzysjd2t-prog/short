@@ -14,6 +14,8 @@ export interface StickScriptResult {
   title: string;
   description: string;
   tags: string[];
+  intro: string;
+  introVisualKeyword: string;
   facts: StickFactItem[];
 }
 
@@ -28,6 +30,8 @@ const stickScriptSchema = z.object({
   title: z.string().min(1).max(100),
   description: z.string().min(1),
   tags: z.array(z.string().min(1)).min(1),
+  intro: z.string().min(1),
+  introVisualKeyword: z.string().min(1),
   facts: z.array(factSchema).min(4).max(6),
 });
 
@@ -59,16 +63,23 @@ export async function generateStickScript(topic: StickTopic): Promise<StickScrip
           `pour illustrer ce fait en fond vidéo (ex: "deep ocean creature", "ancient egyptian ruins", ` +
           `"ancient ruins", "lightning storm") — sert à chercher une vidéo de stock réelle. Toujours une ` +
           `scène concrète et sûre, jamais rien de choquant, violent ou explicite.\n\n` +
+          `- "intro" : une phrase d'accroche courte, DITE À VOIX HAUTE tout au début de la vidéo, qui ` +
+          `annonce clairement le classement, par exemple "TOP 5 des endroits les plus insolites au ` +
+          `monde !". Elle doit OBLIGATOIREMENT commencer par "TOP " suivi du nombre exact d'éléments ` +
+          `(le même nombre que la longueur du tableau "facts"), puis une courte accroche sur le thème.\n` +
+          `- "introVisualKeyword" : 2 à 4 mots EN ANGLAIS décrivant une scène générale et neutre liée au ` +
+          `thème pour illustrer l'accroche en fond vidéo.\n\n` +
           `Contraintes :\n` +
-          `- Entre 4 et 6 éléments au total.\n` +
+          `- Entre 4 et 6 éléments au total, et le nombre annoncé dans "intro" doit être EXACTEMENT égal ` +
+          `au nombre d'éléments dans "facts".\n` +
           `- Ton direct et percutant, phrases courtes, monte en intensité jusqu'à la révélation finale.\n` +
           `- "title" : titre YouTube accrocheur façon "Top 5 ...", donne envie de regarder jusqu'à la fin, ` +
           `100 caractères max.\n` +
           `- "description" : 1-2 phrases + 3-5 hashtags pertinents dont #Shorts.\n` +
           `- "tags" : 8 à 15 mots-clés pertinents.\n\n` +
           `Réponds UNIQUEMENT avec un objet JSON de la forme {"title": "...", "description": "...", ` +
-          `"tags": ["...", "..."], "facts": [{"rank": ..., "label": "...", "text": "...", ` +
-          `"visualKeyword": "..."}, ...]}. Aucun texte avant ou après le JSON.`,
+          `"tags": ["...", "..."], "intro": "...", "introVisualKeyword": "...", "facts": [{"rank": ..., ` +
+          `"label": "...", "text": "...", "visualKeyword": "..."}, ...]}. Aucun texte avant ou après le JSON.`,
       },
     ],
   });
