@@ -31,10 +31,11 @@ jobs:
         run: |
           claude -p "$TASK_PROMPT" --dangerously-skip-permissions
 
-      - name: Commit and push changes
+            - name: Commit and push changes
         run: |
           git add -A
           git diff --cached --quiet || git commit -m "chore: tâche automatique via Claude (issue #${{ github.event.issue.number }})"
+          git pull --rebase origin main
           git push
 
       - name: Comment on issue
