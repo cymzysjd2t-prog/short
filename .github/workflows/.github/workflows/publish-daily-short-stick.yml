@@ -1,0 +1,57 @@
+name: Publish Daily YouTube Short (Stick)
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install system deps (ffmpeg, fonts, canvas build libs)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev pkg-config
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install edge-tts (repli gratuit si ElevenLabs est à court de crédits)
+        run: pip install edge-tts
+
+      - name: Run stick pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          STICK_ELEVENLABS_VOICE_ID: ${{ secrets.STICK_ELEVENLABS_VOICE_ID }}
+          STICK_EDGE_TTS_VOICE: ${{ secrets.STICK_EDGE_TTS_VOICE }}
+          STICK_YOUTUBE_CLIENT_ID: ${{ secrets.STICK_YOUTUBE_CLIENT_ID }}
+          STICK_YOUTUBE_CLIENT_SECRET: ${{ secrets.STICK_YOUTUBE_CLIENT_SECRET }}
+          STICK_YOUTUBE_REFRESH_TOKEN: ${{ secrets.STICK_YOUTUBE_REFRESH_TOKEN }}
+          STICK_YOUTUBE_PRIVACY_STATUS: ${{ secrets.STICK_YOUTUBE_PRIVACY_STATUS }}
+          STICK_YOUTUBE_CATEGORY_ID: ${{ secrets.STICK_YOUTUBE_CATEGORY_ID }}
+          STICK_CHANNEL_NICHE: ${{ secrets.STICK_CHANNEL_NICHE }}
+          STICK_CHANNEL_TONE: ${{ secrets.STICK_CHANNEL_TONE }}
+          STICK_CHANNEL_LANGUAGE: ${{ secrets.STICK_CHANNEL_LANGUAGE }}
+        run: npm run publish:stick
+
+      - name: Commit updated topics & history (stick)
+        run: |
+          git config user.name "youtube-shorts-autopilot-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/topics-stick.json data/history-stick.json
+          git diff --cached --quiet || git commit -m "chore: mise à jour automatique des données stickman (run ${{ github.run_id }})"
+          git pull --rebase origin main
+          git push
