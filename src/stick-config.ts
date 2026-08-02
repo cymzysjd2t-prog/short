@@ -16,6 +16,7 @@ export const stickConfig = {
   elevenlabsApiKey: required("ELEVENLABS_API_KEY"),
   elevenlabsVoiceId: process.env.STICK_ELEVENLABS_VOICE_ID || "onwK4e9ZLuTAKqWW03F9",
   edgeTtsVoice: process.env.STICK_EDGE_TTS_VOICE || "fr-FR-HenriNeural",
+  pexelsApiKey: required("PEXELS_API_KEY"),
 
   youtubeClientId: required("STICK_YOUTUBE_CLIENT_ID"),
   youtubeClientSecret: required("STICK_YOUTUBE_CLIENT_SECRET"),
@@ -28,9 +29,9 @@ export const stickConfig = {
 
   channelNiche:
     process.env.STICK_CHANNEL_NICHE ||
-    "Duels de combattants stickman (bonhommes allumettes) pleins de suspense, avec un twist ou un retournement final",
+    "Tops et faits insolites incroyables (records, mystères, curiosités du monde) façon Bright Side / WatchMojo",
   channelTone:
     process.env.STICK_CHANNEL_TONE ||
-    "épique, dynamique, suspense qui monte crescendo, commentaire façon speaker de combat",
+    "punchy, direct, suspense crescendo, révélation finale qui surprend, donne envie de regarder jusqu'au bout",
   channelLanguage: process.env.STICK_CHANNEL_LANGUAGE || "français",
 };

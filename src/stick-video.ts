@@ -4,27 +4,22 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { stickConfig } from "./stick-config.js";
-import { CANVAS_W, FPS, createFrameCanvas, renderBackground, drawStickman, drawCaption, poseAt } from "./stick-animate.js";
-import type { FightBeat } from "./stick-script.js";
+import type { StickFactItem } from "./stick-script.js";
 
 const ELEVENLABS_API = "https://api.elevenlabs.io/v1";
+const PEXELS_API = "https://api.pexels.com/videos";
+const FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf";
 
-const BG_COLOR = "#181c34";
-const FIGHTER_A_COLOR = "#f5f5f5";
-const FIGHTER_B_COLOR = "#ffb703";
+interface PexelsVideoFile {
+  link: string;
+  width: number;
+  height: number;
+  quality: string;
+}
 
-const MIN_BEAT_SECONDS = 0.7;
-const BASE_MOVE_SECONDS: Record<string, number> = {
-  idle: 0.9,
-  walk_in: 1.1,
-  punch: 0.8,
-  kick: 0.9,
-  block: 0.8,
-  dodge: 0.8,
-  hit_stagger: 0.8,
-  fall: 1.3,
-  victory: 1.8,
-};
+interface PexelsSearchResponse {
+  videos: { video_files: PexelsVideoFile[] }[];
+}
 
 function run(cmd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -125,85 +120,166 @@ async function getAudioDuration(filePath: string): Promise<number> {
   return seconds;
 }
 
-function computeBeatDurations(beats: FightBeat[], totalAudioSeconds: number): number[] {
-  const weights = beats.map((beat) => {
-    const base = BASE_MOVE_SECONDS[beat.moveA] ?? 0.9;
-    return Math.max(base, beat.narration.length / 14);
-  });
-  const weightSum = weights.reduce((a, b) => a + b, 0) || 1;
-  const scale = totalAudioSeconds / weightSum;
-  return weights.map((w) => Math.max(MIN_BEAT_SECONDS, w * scale));
+/** Cherche une vidéo de stock verticale/proche sur Pexels. Retourne false si rien n'est trouvé. */
+async function tryFetchPexelsVideo(query: string, destPath: string): Promise<boolean> {
+  try {
+    const searchRes = await fetch(
+      `${PEXELS_API}/search?query=${encodeURIComponent(query)}&orientation=portrait&per_page=5`,
+      { headers: { Authorization: stickConfig.pexelsApiKey } },
+    );
+    if (!searchRes.ok) {
+      console.warn(`Pexels API -> ${searchRes.status} pour "${query}".`);
+      return false;
+    }
+
+    const data = (await searchRes.json()) as PexelsSearchResponse;
+    const files = data.videos.flatMap((v) => v.video_files);
+    const best =
+      files.find((f) => f.quality === "hd" && f.width < f.height) ??
+      files.find((f) => f.width < f.height) ??
+      files[0];
+
+    if (!best) {
+      console.warn(`Aucune vidéo Pexels trouvée pour "${query}".`);
+      return false;
+    }
+
+    const videoRes = await fetch(best.link);
+    if (!videoRes.ok) {
+      console.warn(`Téléchargement Pexels échoué -> ${videoRes.status} pour "${query}".`);
+      return false;
+    }
+    const buffer = Buffer.from(await videoRes.arrayBuffer());
+    await writeFile(destPath, buffer);
+    return true;
+  } catch (err) {
+    console.warn(`Pexels indisponible pour "${query}" (${err instanceof Error ? err.message : err}).`);
+    return false;
+  }
 }
 
 /**
- * Génère la voix off (une piste unique pour tout le duel), puis dessine chaque frame du combat
- * image par image avec le moteur d'animation stickman, et encode le tout en vidéo avec ffmpeg.
+ * Garantit qu'un fichier vidéo existe à destPath pour cet élément : vidéo Pexels liée au
+ * mot-clé si possible, sinon un fond de couleur unie de la même durée en repli.
  */
-export async function renderStickVideo(params: {
-  beats: FightBeat[];
-  fighterAName: string;
-  fighterBName: string;
-}): Promise<{ videoPath: string }> {
-  const { beats, fighterAName, fighterBName } = params;
-  const workDir = join(tmpdir(), `stick-render-${randomUUID()}`);
-  const framesDir = join(workDir, "frames");
-  await mkdir(framesDir, { recursive: true });
+async function ensureBackgroundSegment(query: string, destPath: string, duration: number): Promise<void> {
+  const found = await tryFetchPexelsVideo(query, destPath);
+  if (!found) {
+    await run("ffmpeg", [
+      "-y",
+      "-f",
+      "lavfi",
+      "-i",
+      `color=c=#20232a:s=1080x1920:d=${duration.toFixed(2)}`,
+      "-c:v",
+      "libx264",
+      "-pix_fmt",
+      "yuv420p",
+      destPath,
+    ]);
+  }
+}
 
-  const fullNarration = beats.map((beat) => beat.narration).join(" ");
+function wrapText(text: string, maxLineLength: number): string {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    if ((current + " " + word).trim().length > maxLineLength && current) {
+      lines.push(current.trim());
+      current = word;
+    } else {
+      current = `${current} ${word}`.trim();
+    }
+  }
+  if (current) lines.push(current);
+  return lines.join("\n");
+}
+
+/**
+ * Génère la voix off (une seule piste pour tous les éléments), récupère une vraie vidéo de
+ * stock (Pexels) pour chaque élément du classement, les enchaîne, puis superpose le rang en
+ * grand et le texte de chaque fait au bon moment.
+ */
+export async function renderStickVideo(params: { facts: StickFactItem[] }): Promise<{ videoPath: string }> {
+  const workDir = join(tmpdir(), `stick-render-${randomUUID()}`);
+  await mkdir(workDir, { recursive: true });
+
+  const fullNarration = params.facts.map((fact) => fact.text).join(" ");
   const audioPath = join(workDir, "voiceover.mp3");
   await synthesizeVoice(fullNarration, audioPath, workDir);
 
-  const totalAudioSeconds = await getAudioDuration(audioPath);
-  const beatDurations = computeBeatDurations(beats, totalAudioSeconds);
+  const duration = await getAudioDuration(audioPath);
+  const totalChars = params.facts.reduce((sum, fact) => sum + fact.text.length, 0) || 1;
 
-  let frameIndex = 0;
-  for (let i = 0; i < beats.length; i++) {
-    const beat = beats[i];
-    const duration = beatDurations[i];
-    if (!beat || !duration) continue;
-    const frameCount = Math.max(1, Math.round(duration * FPS));
-
-    for (let f = 0; f < frameCount; f++) {
-      const t = frameCount === 1 ? 1 : f / (frameCount - 1);
-      const { canvas, ctx } = createFrameCanvas();
-      renderBackground(ctx, BG_COLOR);
-
-      ctx.font = "bold 44px sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      ctx.fillText(fighterAName, 50, 120);
-      ctx.textAlign = "right";
-      ctx.fillText(fighterBName, CANVAS_W - 50, 120);
-
-      drawStickman(ctx, {
-        baseX: CANVAS_W * 0.32,
-        facing: 1,
-        pose: poseAt(beat.moveA, t),
-        color: FIGHTER_A_COLOR,
-      });
-      drawStickman(ctx, {
-        baseX: CANVAS_W * 0.68,
-        facing: -1,
-        pose: poseAt(beat.moveB, t),
-        color: FIGHTER_B_COLOR,
-      });
-      drawCaption(ctx, beat.caption);
-
-      const framePath = join(framesDir, `frame-${String(frameIndex).padStart(6, "0")}.png`);
-      await writeFile(framePath, canvas.toBuffer("image/png"));
-      frameIndex++;
-    }
+  const segmentPaths: string[] = [];
+  const segmentDurations: number[] = [];
+  for (let i = 0; i < params.facts.length; i++) {
+    const fact = params.facts[i];
+    if (!fact) continue;
+    const segmentDuration = duration * (fact.text.length / totalChars);
+    const segmentPath = join(workDir, `bg-${i}.mp4`);
+    await ensureBackgroundSegment(fact.visualKeyword, segmentPath, segmentDuration);
+    segmentPaths.push(segmentPath);
+    segmentDurations.push(segmentDuration);
   }
 
+  const inputArgs: string[] = [];
+  const scaleLabels: string[] = [];
+  const drawtextParts: string[] = [];
+
+  segmentPaths.forEach((path, i) => {
+    const segmentDuration = segmentDurations[i] ?? 0;
+    inputArgs.push("-stream_loop", "-1", "-t", segmentDuration.toFixed(2), "-i", path);
+    scaleLabels.push(
+      `[${i}:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30[v${i}]`,
+    );
+  });
+
+  for (let i = 0; i < params.facts.length; i++) {
+    const fact = params.facts[i];
+    if (!fact) continue;
+    const segmentDuration = segmentDurations[i] ?? 0;
+    const start = segmentDurations.slice(0, i).reduce((a, b) => a + b, 0);
+    const end = start + segmentDuration;
+
+    const labelFile = join(workDir, `label-${i}.txt`);
+    await writeFile(labelFile, fact.label, "utf-8");
+    const textFile = join(workDir, `text-${i}.txt`);
+    await writeFile(textFile, wrapText(fact.text, 26), "utf-8");
+
+    drawtextParts.push(
+      `drawbox=x=0:y=ih*0.18:w=1080:h=ih*0.16:color=black@0.4:t=fill:enable='between(t,${start.toFixed(2)},${end.toFixed(2)})'`,
+    );
+    drawtextParts.push(
+      `drawtext=fontfile=${FONT_PATH}:textfile=${labelFile}:fontcolor=white:fontsize=110:` +
+        `x=(w-text_w)/2:y=h*0.20:enable='between(t,${start.toFixed(2)},${end.toFixed(2)})'`,
+    );
+    drawtextParts.push(
+      `drawtext=fontfile=${FONT_PATH}:textfile=${textFile}:fontcolor=white:fontsize=52:` +
+        `x=(w-text_w)/2:y=h*0.72:box=1:boxcolor=black@0.45:boxborderw=18:` +
+        `enable='between(t,${start.toFixed(2)},${end.toFixed(2)})'`,
+    );
+  }
+
+  const concatInputs = segmentPaths.map((_, i) => `[v${i}]`).join("");
+  const concatFilter = `${concatInputs}concat=n=${segmentPaths.length}:v=1:a=0[bg]`;
+  const filterComplex = [...scaleLabels, concatFilter, `[bg]${drawtextParts.join(",")}[out]`].join(";");
+
+  const audioInputIndex = segmentPaths.length;
   const outputPath = join(workDir, "output.mp4");
+
   await run("ffmpeg", [
     "-y",
-    "-framerate",
-    String(FPS),
-    "-i",
-    join(framesDir, "frame-%06d.png"),
+    ...inputArgs,
     "-i",
     audioPath,
+    "-filter_complex",
+    filterComplex,
+    "-map",
+    "[out]",
+    "-map",
+    `${audioInputIndex}:a`,
     "-c:v",
     "libx264",
     "-pix_fmt",

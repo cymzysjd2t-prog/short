@@ -23,7 +23,7 @@ async function saveTopics(topics: StickTopic[]): Promise<void> {
   await writeFile(TOPICS_PATH, `${JSON.stringify(topics, null, 2)}\n`, "utf-8");
 }
 
-/** Demande à Claude un lot de nouveaux scénarios de duel. Appelé quand la file est vide. */
+/** Demande à Claude un lot de nouveaux thèmes de "Top". Appelé quand la file est vide. */
 async function ideateTopics(): Promise<StickTopic[]> {
   const message = await anthropic.messages.create({
     model: "claude-sonnet-5",
@@ -32,20 +32,20 @@ async function ideateTopics(): Promise<StickTopic[]> {
       {
         role: "user",
         content:
-          `Tu proposes des scénarios de duels pour une chaîne YouTube Shorts de combats stickman ` +
-          `(bonhommes allumettes animés), sur : "${stickConfig.channelNiche}". Donne ${IDEATION_BATCH_SIZE} ` +
-          `scénarios courts, chacun un affrontement entre deux combattants avec un archétype ou une arme ` +
-          `distincte (ex: "Le ninja silencieux contre le guerrier lourdement armé", "Le champion invaincu ` +
-          `contre l'outsider inconnu", "Duel au sommet d'un gratte-ciel, un seul survivra"). Chaque scénario ` +
-          `doit se prêter à un twist final surprenant. Réponds UNIQUEMENT avec un tableau JSON de chaînes, ` +
-          `ex: ["Scénario 1", "Scénario 2", ...]. Aucun texte avant ou après le JSON.`,
+          `Tu proposes des thèmes de vidéos YouTube Shorts "Top" de faits insolites, sur : ` +
+          `"${stickConfig.channelNiche}". Donne ${IDEATION_BATCH_SIZE} thèmes courts et concrets, ` +
+          `chacun exploitable en un compte à rebours de 4-6 éléments (ex: "Les endroits les plus ` +
+          `mystérieux jamais découverts", "Les records les plus fous de la nature", "Les coïncidences ` +
+          `les plus troublantes de l'histoire", "Les créatures les plus étranges des océans"). Réponds ` +
+          `UNIQUEMENT avec un tableau JSON de chaînes, ex: ["Thème 1", "Thème 2", ...]. Aucun texte avant ` +
+          `ou après le JSON.`,
       },
     ],
   });
 
   const textBlock = message.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Claude n'a renvoyé aucun contenu texte pour l'idéation de scénarios stickman.");
+    throw new Error("Claude n'a renvoyé aucun contenu texte pour l'idéation de thèmes Top.");
   }
 
   const ideas = ideasSchema.parse(extractJson<string[]>(textBlock.text));
@@ -57,13 +57,13 @@ export async function getNextStickTopic(): Promise<StickTopic> {
   let topics = await loadTopics();
 
   if (topics.length === 0) {
-    console.log("File de scénarios stickman vide — génération d'un nouveau lot via Claude...");
+    console.log("File de thèmes Top vide — génération d'un nouveau lot via Claude...");
     topics = await ideateTopics();
   }
 
   const [next, ...rest] = topics;
   if (!next) {
-    throw new Error("Impossible d'obtenir un scénario stickman : la génération a renvoyé une liste vide.");
+    throw new Error("Impossible d'obtenir un thème Top : la génération a renvoyé une liste vide.");
   }
 
   await saveTopics(rest);

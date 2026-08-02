@@ -41,7 +41,7 @@ export async function uploadStickShort(
 
   const videoId = res.data.id;
   if (!videoId) {
-    throw new Error("L'upload YouTube (chaîne stickman) a réussi mais n'a renvoyé aucun ID de vidéo.");
+    throw new Error("L'upload YouTube (chaîne Top) a réussi mais n'a renvoyé aucun ID de vidéo.");
   }
 
   return { videoId, url: `https://youtube.com/shorts/${videoId}` };

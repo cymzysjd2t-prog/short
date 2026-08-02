@@ -23,27 +23,23 @@ async function appendHistory(entry: StickHistoryEntry): Promise<void> {
 }
 
 /**
- * Exécute un cycle complet pour la chaîne stickman : scénario -> chorégraphie du duel (Claude)
- * -> voix + animation générée par le moteur maison -> upload YouTube -> historique.
+ * Exécute un cycle complet pour la chaîne "Top" : thème -> script (classement de faits, Claude)
+ * -> voix + montage vidéo (vraies vidéos de stock Pexels) -> upload YouTube -> historique.
  */
 export async function runStickPipeline(): Promise<void> {
-  console.log("1/4 — Sélection du scénario de duel...");
+  console.log("1/4 — Sélection du thème...");
   const topic = await getNextStickTopic();
   console.log(`   -> "${topic.title}"`);
 
-  console.log("2/4 — Génération de la chorégraphie du combat...");
+  console.log("2/4 — Génération du script (classement de faits)...");
   const script = await generateStickScript(topic);
-  console.log(`   -> Titre : "${script.title}" (${script.beats.length} beats)`);
+  console.log(`   -> Titre : "${script.title}" (${script.facts.length} faits)`);
 
-  console.log("3/4 — Génération de la voix et animation du duel...");
-  const { videoPath } = await renderStickVideo({
-    beats: script.beats,
-    fighterAName: script.fighterAName,
-    fighterBName: script.fighterBName,
-  });
+  console.log("3/4 — Génération de la voix et montage vidéo...");
+  const { videoPath } = await renderStickVideo({ facts: script.facts });
 
   try {
-    console.log("4/4 — Publication sur YouTube (chaîne stickman)...");
+    console.log("4/4 — Publication sur YouTube (chaîne Top)...");
     const { videoId, url } = await uploadStickShort(videoPath, script);
     console.log(`   -> Publié : ${url}`);
 
