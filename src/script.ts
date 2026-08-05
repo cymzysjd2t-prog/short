@@ -20,7 +20,7 @@ const scriptSchema = z.object({
 export async function generateScript(topic: Topic): Promise<ScriptResult> {
   const message = await anthropic.messages.create({
     model: "claude-sonnet-5",
-    max_tokens: 3000,
+    max_tokens: 4096,
     messages: [
       {
         role: "user",
@@ -46,6 +46,12 @@ export async function generateScript(topic: Topic): Promise<ScriptResult> {
       },
     ],
   });
+
+  if (message.stop_reason === "max_tokens") {
+    throw new Error(
+      "La réponse de Claude a été tronquée (limite max_tokens atteinte) avant la fin du script.",
+    );
+  }
 
   const textBlock = message.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") {
