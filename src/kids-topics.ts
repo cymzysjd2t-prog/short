@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { z } from "zod";
-import { anthropic, extractJson } from "./claude.js";
+import { extractJson, generateText } from "./claude.js";
 import { kidsConfig } from "./kids-config.js";
 
 export interface KidsTopic {
@@ -23,30 +23,20 @@ async function saveTopics(topics: KidsTopic[]): Promise<void> {
   await writeFile(TOPICS_PATH, `${JSON.stringify(topics, null, 2)}\n`, "utf-8");
 }
 
+/** Demande à Claude un lot de nouveaux thèmes enfants. Appelé quand la file est vide. */
 async function ideateTopics(): Promise<KidsTopic[]> {
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-5",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content:
-          `Tu proposes des thèmes de vidéos YouTube Shorts éducatives pour très jeunes enfants ` +
-          `(maternelle), sur : "${kidsConfig.channelNiche}". Donne ${IDEATION_BATCH_SIZE} thèmes courts, ` +
-          `chacun exploitable en 20-30 secondes (ex: "Compter de 1 à 5 avec des fruits", "Les lettres A à ` +
-          `E avec des animaux", "Les couleurs primaires", "Les formes géométriques simples"). Réponds ` +
-          `UNIQUEMENT avec un tableau JSON de chaînes, ex: ["Thème 1", "Thème 2", ...]. Aucun texte avant ` +
-          `ou après le JSON.`,
-      },
-    ],
+  const text = await generateText({
+    maxTokens: 1024,
+    prompt:
+      `Tu proposes des thèmes de vidéos YouTube Shorts éducatives pour très jeunes enfants ` +
+      `(maternelle), sur : "${kidsConfig.channelNiche}". Donne ${IDEATION_BATCH_SIZE} thèmes courts, ` +
+      `chacun exploitable en 20-30 secondes (ex: "Compter de 1 à 5 avec des fruits", "Les lettres A à ` +
+      `E avec des animaux", "Les couleurs primaires", "Les formes géométriques simples"). Réponds ` +
+      `UNIQUEMENT avec un tableau JSON de chaînes, ex: ["Thème 1", "Thème 2", ...]. Aucun texte avant ` +
+      `ou après le JSON.`,
   });
 
-  const textBlock = message.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Claude n'a renvoyé aucun contenu texte pour l'idéation de thèmes enfants.");
-  }
-
-  const ideas = ideasSchema.parse(extractJson<string[]>(textBlock.text));
+  const ideas = ideasSchema.parse(extractJson<string[]>(text));
   const now = new Date().toISOString();
   return ideas.map((title) => ({ id: randomUUID(), title, createdAt: now }));
 }
