@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { z } from "zod";
-import { anthropic, extractJson } from "./claude.js";
+import { extractJson, generateText } from "./claude.js";
 import { config } from "./config.js";
 import type { Topic } from "./types.js";
 
@@ -24,30 +24,19 @@ async function saveTopics(topics: Topic[]): Promise<void> {
  * Appelé uniquement quand la file data/topics.json est vide.
  */
 async function ideateTopics(existingTitles: string[]): Promise<Topic[]> {
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-5",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content:
-          `Tu proposes des idées de vidéos YouTube Shorts pour une chaîne sur : "${config.channelNiche}". ` +
-          `Ton de la chaîne : ${config.channelTone}. Langue : ${config.channelLanguage}. ` +
-          `Donne ${IDEATION_BATCH_SIZE} idées de sujets courts et accrocheurs, chacun exploitable en 45-60 ` +
-          `secondes de vidéo, sans répéter ces sujets déjà utilisés : ` +
-          `${existingTitles.length ? existingTitles.join(", ") : "(aucun)"}. ` +
-          `Réponds UNIQUEMENT avec un tableau JSON de chaînes de caractères, ex: ["Sujet 1", "Sujet 2", ...]. ` +
-          `Aucun texte avant ou après le JSON.`,
-      },
-    ],
+  const text = await generateText({
+    maxTokens: 1024,
+    prompt:
+      `Tu proposes des idées de vidéos YouTube Shorts pour une chaîne sur : "${config.channelNiche}". ` +
+      `Ton de la chaîne : ${config.channelTone}. Langue : ${config.channelLanguage}. ` +
+      `Donne ${IDEATION_BATCH_SIZE} idées de sujets courts et accrocheurs, chacun exploitable en 45-60 ` +
+      `secondes de vidéo, sans répéter ces sujets déjà utilisés : ` +
+      `${existingTitles.length ? existingTitles.join(", ") : "(aucun)"}. ` +
+      `Réponds UNIQUEMENT avec un tableau JSON de chaînes de caractères, ex: ["Sujet 1", "Sujet 2", ...]. ` +
+      `Aucun texte avant ou après le JSON.`,
   });
 
-  const textBlock = message.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Claude n'a renvoyé aucun contenu texte pour l'idéation de sujets.");
-  }
-
-  const ideas = ideasSchema.parse(extractJson<string[]>(textBlock.text));
+  const ideas = ideasSchema.parse(extractJson<string[]>(text));
   const now = new Date().toISOString();
   return ideas.map((title) => ({ id: randomUUID(), title, createdAt: now }));
 }
