@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "id": "d8655e97-7cba-4a3e-ab4e-0e53a4a22067",
+    "title": "Le mystère de la carte de Zodiac",
+    "createdAt": "2026-08-05T20:47:48.787Z"
+  },
+  {
+    "id": "6edf4b06-5a6d-425f-ae5c-8f2516e2e543",
+    "title": "L'étrange affaire du village abandonné de Centralia",
+    "createdAt": "2026-08-05T20:47:48.787Z"
+  },
+  {
+    "id": "841ea8fe-45d5-46d0-af1b-0c97b966e2a7",
+    "title": "Le cas des jumelles qui partageaient les mêmes rêves",
+    "createdAt": "2026-08-05T20:47:48.787Z"
+  },
+  {
+    "id": "dad76eed-cea0-4605-a1e2-3df673b2ee67",
+    "title": "La prédiction de la catastrophe du Titanic par Morgan Robertson",
+    "createdAt": "2026-08-05T20:47:48.787Z"
+  },
+  {
+    "id": "f1fce1b6-3537-47f0-bdcf-cb4c6df88124",
+    "title": "L'énigme de la Pierre de Palerme",
+    "createdAt": "2026-08-05T20:47:48.787Z"
+  },
+  {
+    "id": "8331ae15-c99e-4871-bceb-dc934cfb7c2f",
+    "title": "Le phénomène des lueurs fantômes de Min Min",
+    "createdAt": "2026-08-05T20:47:48.787Z"
+  },
+  {
+    "id": "56a1c686-a521-4307-bba4-9302ba4a3ebf",
+    "title": "L'histoire vraie derrière l'horreur de la maison Amityville",
+    "createdAt": "2026-08-05T20:47:48.787Z"
+  },
+  {
+    "id": "e4b98044-34e9-469d-8c93-42c1596bffa8",
+    "title": "Les coïncidences inquiétantes entre Lincoln et Kennedy",
+    "createdAt": "2026-08-05T20:47:48.787Z"
+  },
+  {
+    "id": "04d707b8-2e5f-48b9-9e49-9f7c7bbe28f7",
+    "title": "Le secret enterré de la famille Romanov",
+    "createdAt": "2026-08-05T20:47:48.787Z"
+  }
+]
