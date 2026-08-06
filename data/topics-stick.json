@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "id": "d7235e84-17a1-4f3d-a9d1-c3a5c3abbcf7",
+    "title": "Les expériences scientifiques les plus dangereuses",
+    "createdAt": "2026-08-06T13:21:31.027Z"
+  },
+  {
+    "id": "bf12375e-1142-4c25-bb87-6f5d3c3497c2",
+    "title": "Les mystères non résolus de l'espace",
+    "createdAt": "2026-08-06T13:21:31.027Z"
+  },
+  {
+    "id": "dbd2cf5f-64a1-4e76-ad67-264571eae015",
+    "title": "Les records de vitesse les plus incroyables",
+    "createdAt": "2026-08-06T13:21:31.027Z"
+  },
+  {
+    "id": "b4d61652-533e-4fd3-ba23-8afe31a3dacc",
+    "title": "Les créatures mythiques les plus fascinantes",
+    "createdAt": "2026-08-06T13:21:31.027Z"
+  },
+  {
+    "id": "fa0234f2-8ec6-46e9-a1c0-48649d168fa6",
+    "title": "Les lieux les plus toxiques de la planète",
+    "createdAt": "2026-08-06T13:21:31.027Z"
+  },
+  {
+    "id": "18d0281c-129d-472c-8029-0b6c5b7ffeec",
+    "title": "Les découvertes archéologiques les plus choquantes",
+    "createdAt": "2026-08-06T13:21:31.027Z"
+  },
+  {
+    "id": "7120d3f1-3461-4243-a685-d2d2c468e5cf",
+    "title": "Les événements les plus bizarres de l'histoire",
+    "createdAt": "2026-08-06T13:21:31.027Z"
+  },
+  {
+    "id": "d403e44f-d099-4501-a2f4-4aa74e1a374b",
+    "title": "Les phénomènes naturels les plus inexplicables",
+    "createdAt": "2026-08-06T13:21:31.027Z"
+  },
+  {
+    "id": "a13550f0-36c5-4df8-8d1a-df8329247800",
+    "title": "Les inventions les plus étranges jamais créées",
+    "createdAt": "2026-08-06T13:21:31.027Z"
+  }
+]
