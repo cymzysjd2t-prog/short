@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "id": "e65fdde8-4d9d-455d-9d4c-bfacf44d31aa",
+    "title": "Le mystère de la Mary Celeste",
+    "createdAt": "2026-08-12T11:35:38.355Z"
+  },
+  {
+    "id": "76a4173e-cf2c-402d-b7ce-2745117da803",
+    "title": "Les coïncidences troublantes de la famille Kennedy",
+    "createdAt": "2026-08-12T11:35:38.355Z"
+  },
+  {
+    "id": "1bceca05-cb04-4c43-9af7-d9e25cbb72da",
+    "title": "L'étrange cas du Taman Shud",
+    "createdAt": "2026-08-12T11:35:38.355Z"
+  },
+  {
+    "id": "3db8d3e0-3ff4-490a-8b4b-78a4e05c2080",
+    "title": "La prévision de la catastrophe du Titanic",
+    "createdAt": "2026-08-12T11:35:38.355Z"
+  },
+  {
+    "id": "976cb6f6-e45a-47de-a64d-433ea7eb36fe",
+    "title": "Les apparitions fantomatiques de Resurrection Mary",
+    "createdAt": "2026-08-12T11:35:38.355Z"
+  },
+  {
+    "id": "6c480158-ed78-414a-9656-79c6f0acc133",
+    "title": "Le secret de la zone 51",
+    "createdAt": "2026-08-12T11:35:38.355Z"
+  },
+  {
+    "id": "b05eb56a-9b23-4a9d-a4b7-d6a21eda6a57",
+    "title": "L'énigme de la carte de l'île du Trésor",
+    "createdAt": "2026-08-12T11:35:38.355Z"
+  },
+  {
+    "id": "85c6c9ca-5256-40c2-b748-2539f49284b8",
+    "title": "Le mystère des étranges lumières de Phoenix",
+    "createdAt": "2026-08-12T11:35:38.355Z"
+  },
+  {
+    "id": "82eafbbd-5e3b-4d8d-b4ac-7ec35813d11a",
+    "title": "La malédiction de la famille Vanderbilt",
+    "createdAt": "2026-08-12T11:35:38.355Z"
+  }
+]
