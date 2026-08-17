@@ -47,7 +47,7 @@ async function generateWithGroq(prompt: string, maxTokens: number): Promise<stri
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "   model:"openai/gpt-oss-120b",
       max_tokens: maxTokens,
       messages: [{ role: "user", content: prompt }],
     }),
