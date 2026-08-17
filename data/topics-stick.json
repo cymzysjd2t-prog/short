@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "id": "8f5e6354-b76e-4cde-90e7-38c168caab17",
+    "title": "Les records animaliers les plus incroyables",
+    "createdAt": "2026-08-17T17:49:27.711Z"
+  },
+  {
+    "id": "d2cb4fea-3079-4fd6-8629-7761abd30e17",
+    "title": "Les coïncidences historiques qui défient la logique",
+    "createdAt": "2026-08-17T17:49:27.711Z"
+  },
+  {
+    "id": "0ecbb68f-fdbe-4d23-8870-e5f90555a492",
+    "title": "Les créatures marines les plus étranges",
+    "createdAt": "2026-08-17T17:49:27.711Z"
+  },
+  {
+    "id": "5a32fc02-9ee4-49b4-900c-af1be1a7069e",
+    "title": "Les phénomènes naturels impossibles à expliquer",
+    "createdAt": "2026-08-17T17:49:27.711Z"
+  },
+  {
+    "id": "d71a0a8d-83d5-4cd9-80d9-3ed2383ab693",
+    "title": "Les objets archéologiques aux origines énigmatiques",
+    "createdAt": "2026-08-17T17:49:27.711Z"
+  },
+  {
+    "id": "273bd4d6-5769-4be6-892f-2bc18b6cd282",
+    "title": "Les catastrophes naturelles les plus improbables",
+    "createdAt": "2026-08-17T17:49:27.711Z"
+  },
+  {
+    "id": "d02d7177-acab-4f7c-ba86-b8518a8ba415",
+    "title": "Les inventions qui ont changé le monde par hasard",
+    "createdAt": "2026-08-17T17:49:27.711Z"
+  },
+  {
+    "id": "5ba44d4f-db6e-4b86-b607-2cf885a52404",
+    "title": "Les phénomènes lumineux inexpliqués dans le ciel",
+    "createdAt": "2026-08-17T17:49:27.711Z"
+  },
+  {
+    "id": "2cbc4bab-abee-4d24-8c15-ebc3420a1314",
+    "title": "Les records humains les plus bizarres",
+    "createdAt": "2026-08-17T17:49:27.711Z"
+  }
+]
