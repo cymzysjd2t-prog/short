@@ -42,7 +42,7 @@ const stickScriptSchema = z.object({
  */
 export async function generateStickScript(topic: StickTopic): Promise<StickScriptResult> {
   const text = await generateText({
-    maxTokens: 2000,
+    maxTokens: 4096,
     prompt:
       `Tu écris le script d'un YouTube Short "Top" de faits insolites, sur le thème : ` +
       `"${topic.title}". Chaîne : "${stickConfig.channelNiche}". Ton : ${stickConfig.channelTone}. ` +
