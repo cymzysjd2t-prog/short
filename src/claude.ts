@@ -46,10 +46,12 @@ async function generateWithGroq(prompt: string, maxTokens: number): Promise<stri
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
+        body: JSON.stringify({
       model: "openai/gpt-oss-120b",
       max_tokens: maxTokens,
+      reasoning_effort: "low",
       messages: [{ role: "user", content: prompt }],
+    }),
     }),
   });
 
