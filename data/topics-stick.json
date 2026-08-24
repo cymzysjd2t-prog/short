@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "id": "5cbc9d17-9452-453a-9110-d4e10bceecaf",
+    "title": "Les records humains les plus improbables",
+    "createdAt": "2026-08-24T21:24:23.470Z"
+  },
+  {
+    "id": "276ef06e-6086-4fcb-a3d4-c3ee26ece716",
+    "title": "Les phénomènes naturels les plus bizarres",
+    "createdAt": "2026-08-24T21:24:23.470Z"
+  },
+  {
+    "id": "4c2d4e2e-7d6e-4783-8093-1cb4d4b1dc50",
+    "title": "Les mystères non résolus de l'archéologie",
+    "createdAt": "2026-08-24T21:24:23.470Z"
+  },
+  {
+    "id": "88064190-7798-471f-8c9f-5b8f7c3570ae",
+    "title": "Les animaux aux capacités surnaturelles",
+    "createdAt": "2026-08-24T21:24:23.470Z"
+  },
+  {
+    "id": "fe793fe6-2f6f-4617-afa5-91be2d7f9d6a",
+    "title": "Les coïncidences historiques qui défient la logique",
+    "createdAt": "2026-08-24T21:24:23.470Z"
+  },
+  {
+    "id": "db0ad63b-a1fd-455f-9295-e8f5897d2e45",
+    "title": "Les inventions qui ont changé le monde en un clin d'œil",
+    "createdAt": "2026-08-24T21:24:23.470Z"
+  },
+  {
+    "id": "88fa3e62-9f83-4d9c-b95f-d50b674bb350",
+    "title": "Les endroits où le temps se comporte étrangement",
+    "createdAt": "2026-08-24T21:24:23.470Z"
+  },
+  {
+    "id": "c94f3c24-9851-45fd-a898-774da263a6d9",
+    "title": "Les secrets cachés des grandes pyramides",
+    "createdAt": "2026-08-24T21:24:23.470Z"
+  },
+  {
+    "id": "d0fac57b-f572-43b6-a169-4131c3ba6253",
+    "title": "Les créatures légendaires qui existent vraiment",
+    "createdAt": "2026-08-24T21:24:23.470Z"
+  }
+]
