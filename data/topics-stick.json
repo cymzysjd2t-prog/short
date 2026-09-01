@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "id": "9af5a875-6292-4067-a21e-a987a4af96af",
+    "title": "Les lieux abandonnés qui défient le temps",
+    "createdAt": "2026-09-01T15:14:52.739Z"
+  },
+  {
+    "id": "0c084e47-f712-4995-a418-cd1a780294be",
+    "title": "Les phénomènes naturels impossibles à expliquer",
+    "createdAt": "2026-09-01T15:14:52.739Z"
+  },
+  {
+    "id": "70a37610-4811-428b-85ba-ce50f31e583e",
+    "title": "Les objets du quotidien qui ont un passé secret",
+    "createdAt": "2026-09-01T15:14:52.739Z"
+  },
+  {
+    "id": "373ae3a5-1b76-4a82-b0df-80e2e10f8ce9",
+    "title": "Les mystères archéologiques qui restent sans réponse",
+    "createdAt": "2026-09-01T15:14:52.739Z"
+  },
+  {
+    "id": "abac65d9-b8b0-4cc0-b968-a4248f507927",
+    "title": "Les animaux qui possèdent des pouvoirs surnaturels",
+    "createdAt": "2026-09-01T15:14:52.739Z"
+  },
+  {
+    "id": "eb396d00-9a1d-4d37-977c-600dfa1c1aff",
+    "title": "Les coïncidences historiques qui semblent prédestinées",
+    "createdAt": "2026-09-01T15:14:52.739Z"
+  },
+  {
+    "id": "3a03a7cc-2eef-457a-8267-6fa677856554",
+    "title": "Les inventions qui ont échoué de façon spectaculaire",
+    "createdAt": "2026-09-01T15:14:52.739Z"
+  },
+  {
+    "id": "542bf728-7472-4321-b32a-766e18caee17",
+    "title": "Les phénomènes lumineux inexpliqués dans le ciel",
+    "createdAt": "2026-09-01T15:14:52.739Z"
+  },
+  {
+    "id": "ae46cc08-9017-4008-ac1a-ce932e93d40a",
+    "title": "Les langues et écritures disparues mystérieusement",
+    "createdAt": "2026-09-01T15:14:52.739Z"
+  }
+]
